@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bjsxt.mapper.UsersMapper">
+    <cache/>
+
+    <!--查询所有用户-->
+    <select id="selectUsersAll" resultType="users">
+        select * from users
+    </select>
+
+    <!--根据用户ID查询用户-->
+    <select id="selectUsersById" resultType="Users">
+        select * from users where userid = #{userid}
+    </select>
+
+    <!--根据用户姓名以及用户性别查询用户，使用顺序传参法-->
+    <select id="selectUsersOrderParam" resultType="Users">
+        select * from users where username = #{arg0} and usersex = #{arg1}
+        /*如果这里不使用arg0和arg1,就要使用param1和param2,两个标准一个从0开始一个从1开始*/
+    </select>
+
+    <!--根据用户姓名以及用户性别查询用户，使用@Param传参法-->
+    <select id="selectUsersAnnParam" resultType="Users">
+        select * from users where username = #{name} and usersex = #{sex}
+    </select>
+
+    <!--根据用户姓名以及用户性别查询用户，使用POJO传参法-->
+    <select id="selectUsersPOJOParam" resultType="Users">
+        select * from users where username = #{username} and usersex = #{usersex}
+    </select>
+
+    <!--根据用户姓名以及用户性别查询用户，使用Map传参法-->
+    <select id="selectUsersMapParam" resultType="Users">
+        select * from users where username = #{keyname} and usersex = #{keysex}
+    </select>
+
+    <!--查询用户ID大于1的用户-->
+    <select id="selectUsers" resultType="Users">
+        select * from users where userid <![CDATA[ > ]]> #{userid}
+        /*select * from users where userid &gt; #{userid}*/
+        /*select * from users where userid > #{userid}*/
+    </select>
+
+    <!--查询所有数据使用RowBounds实现分页处理-->
+    <select id="selectUsersRowBounds" resultType="Users">
+        select * from users
+    </select>
+
+    <!--查询所有数据使用limit实现分页处理-->
+    <select id="selectUsersLimit" resultType="Users">
+        select * from users limit #{offset},#{limit}
+    </select>
+
+    <!--添加用户-->
+    <insert id="insertUsers">
+        insert into users VALUES(default ,#{username},#{usersex})
+    </insert>
+
+    <!--添加用户获取主键值[自增]-->
+    <insert id="insertUsersGetKey" useGeneratedKeys="true" keyProperty="userid">
+        insert into users VALUES(default ,#{username},#{usersex})
+    </insert>
+
+    <!--添加用户获取主键值[非自增],适用于Oracle的没有主键自增的数据库-->
+    <!--Oracle数据库中：order="BEFORE",sql语句为:select sql.nextval from dual,insert时主键为userid-->
+    <!--Mysql数据库中：order="AFTER",sql语句为:select LAST_INSERT_ID(),insert时主键为default-->
+    <!--Mysql数据库中：sql语句可以写select @@IDENTITY也可以写select LAST_INSERT_ID(),选一个就可以了-->
+    <insert id="insertUsersGetKey2">
+        <selectKey order="AFTER" keyProperty="userid" resultType="int">
+            select @@IDENTITY
+        </selectKey>
+        insert into users VALUES(default ,#{username},#{usersex})
+    </insert>
+
+    <!--根据用户给定的条件进行查询-->
+    <select id="selectUsersByProperty" resultType="Users">
+        select * from users where 1=1
+        <if test="userid != 0">
+            and userid = #{userid}
+        </if>
+        <if test="username != null and username != ''">
+            and username = #{username}
+        </if>
+        <if test="usersex != null and usersex != ''">
+            and usersex = #{usersex}
+        </if>
+    </select>
+
+    <!--多选一条件-->
+    <select id="selectUsersByChoose" resultType="Users">
+        select * from users where 1=1
+        <choose>
+            <when test="username != null and username != ''">
+                and username = #{username}
+            </when>
+            <when test="usersex != null and usersex != ''">
+                and usersex = #{usersex}
+            </when>
+            <otherwise>
+                and userid = 1
+            </otherwise>
+        </choose>
+    </select>
+
+    <!--根据用户给定的条件进行查询使用where标签实现-->
+    <select id="selectUsersByPropertyWhere" resultType="Users">
+        select * from users
+        <where>
+            <if test="userid != 0">
+                and userid = #{userid}
+            </if>
+            <if test="username != null and username != ''">
+                and username = #{username}
+            </if>
+            <if test="usersex != null and usersex != ''">
+                and usersex = #{usersex}
+            </if>
+        </where>
+    </select>
+
+    <!--根据用户姓名模糊查询-->
+    <!--可以通过字符串拼接实现条件的组合：select * from users where username like concat('%',#{username},'%')-->
+    <select id="selectUsersByLikeName" resultType="Users">
+        <bind name="likeName" value="'%'+name+'%'"/>
+        select * from users where username like #{likeName}
+    </select>
+
+    <!--选择更新，用户传来哪些字段，修改数据库里对应的字段-->
+    <!--条件需要写在set标签的外面-->
+    <update id="usersUpdate">
+        update users
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="usersex != null and usersex != ''">
+                usersex = #{usersex},
+            </if>
+        </set>
+        where userid = #{userid}
+    </update>
+
+    <!--查询用户ID为1或者2的用户-->
+    <select id="selectUsersByIdUseCollection" resultType="Users">
+        select * from users where userid in
+        <foreach collection="collection" item="userid" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+    </select>
+
+    <!--查询用户ID为1或者2的用户,使用数组传递参数-->
+    <select id="selectUsersByIdUseArray" resultType="Users">
+        select * from users where userid in
+        <foreach collection="array" item="userid" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+    </select>
+
+    <!--根据给定的条件做计数处理-->
+    <!--select count(*) from users where username = 'itbz-stx4' and usersex = 'male'-->
+    <select id="selectUsersCount" resultType="int">
+        select count(*) from users where
+        <foreach collection="suibian" separator="and" item="value" index="key">
+            ${key} = #{value}
+        </foreach>
+    </select>
+
+    <!--批量添加用户-->
+    <!--insert into users values (DEFAULT,'itbz-sxt5','male'),(DEFAULT,'itbz-sxt6','male')-->
+    <!--因为open和close在使用过程中,只会添加一次左右括号,满足不了需求，所以需要拼接前自己写好左右括号-->
+    <insert id="insertUsersBatch">
+        insert into users values
+        <foreach collection="collection" item="user" separator=",">
+            (DEFAULT,#{user.username},#{user.usersex})
+        </foreach>
+    </insert>
+</mapper>
